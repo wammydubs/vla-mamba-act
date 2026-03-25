@@ -1,0 +1,39 @@
+# Mamba Supervisor configuration
+
+# ---- Input dimensions ----
+# Must match ACTDecoder dim_model (default 512 for ResNet-18 backbone)
+visual_feature_dim: 512
+robot_state_dim: 14
+# Use 512 for dev/testing; set to 4096 when running real OpenVLA-7B
+vla_embedding_dim: 512
+
+# ---- Architecture ----
+input_proj_dim: 256
+mamba_d_model: 256
+mamba_n_layers: 4
+mamba_d_state: 16
+mamba_expand: 2
+mamba_d_conv: 4
+dropout: 0.1
+
+# ---- Deviation detection ----
+# "cosine": 1 - cosine_sim(visual_features, vla_visual_context) -- no training needed
+# "l2":     normalized L2 distance
+# "learned_mlp": MLP head trained on labeled rollout data (best, needs data first)
+deviation_metric: "cosine"
+soft_threshold: 0.15   # triggers soft intervention (slow execution)
+hard_threshold: 0.40   # triggers hard intervention (VLA re-query)
+
+# ---- Intervention policy ----
+cooldown_timesteps: 20  # minimum steps between consecutive VLA re-queries
+tiered_intervention: true
+
+# ---- Pipeline config ----
+pipeline:
+  supervisor_enabled: true
+  vla_query_interval: 100   # baseline mode only (supervisor_enabled: false)
+  n_action_steps: 1         # must match ACT config
+  wandb_project: "vla-mamba-act"
+  log_deviation: true
+  log_visual_features: false
+  device: "cuda"

@@ -1,0 +1,23 @@
+# ACT Decoder configuration
+# Default target: ALOHA bimanual manipulation task
+
+pretrained_path: "lerobot/act_aloha_sim_transfer_cube_human"
+
+# Action chunking
+chunk_size: 100
+n_action_steps: 1          # Must be 1 when using temporal_ensemble_coeff
+temporal_ensemble_coeff: 0.01  # null to disable (use chunk mode instead)
+
+use_vae: true
+device: "cuda"
+
+# Proprioceptive state + action dims (7-DOF arm x2 + grippers)
+robot_state_dim: 14
+action_dim: 14
+
+# Image input shape (C, H, W)
+image_shape: [3, 480, 640]
+
+# Camera keys expected in the observation dict
+camera_keys:
+  - "observation.images.top"

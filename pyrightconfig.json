@@ -1,0 +1,8 @@
+{
+  "pythonPath": "/home/wammydubs/research_code/.venv/bin/python",
+  "pythonVersion": "3.12",
+  "extraPaths": [
+    ".",
+    "lerobot/src"
+  ]
+}

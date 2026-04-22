@@ -269,17 +269,20 @@ class MambaSupervisor(nn.Module):
         x = self._fuse_inputs(visual_features, robot_state, vla_output)
 
         # 2. Single-step recurrent pass through each Mamba layer
-        #    Mamba1.step(hidden_states, conv_state, ssm_state) -> (out, ssm_state)
+        #    Mamba1.step() expects (B, 1, d_model) and returns (out, conv_state, ssm_state)
         for i, (mamba_layer, norm) in enumerate(zip(self.mamba_layers, self.layer_norms)):
             residual = x
             x_norm = norm(x)
-            out, new_ssm = mamba_layer.step(  # type: ignore[union-attr]
-                x_norm,
+            # Mamba.step() expects (B, 1, d_model); we have (B, d_model)
+            x_step = x_norm.unsqueeze(1)
+            out, new_conv, new_ssm = mamba_layer.step(  # type: ignore[union-attr]
+                x_step,
                 hidden_state[f"layer_{i}_conv"],
                 hidden_state[f"layer_{i}_ssm"],
             )
+            hidden_state[f"layer_{i}_conv"] = new_conv
             hidden_state[f"layer_{i}_ssm"] = new_ssm
-            x = out + residual
+            x = out.squeeze(1) + residual
 
         # 3. Deviation score
         deviation_score = self._compute_deviation(x, visual_features, vla_output)

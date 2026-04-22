@@ -163,7 +163,7 @@ class VLAMambaACTPipeline:
             # Fallback: zero features if hook still not populated
             if visual_features is None:
                 visual_features = torch.zeros(
-                    1, self.act.config.image_shape[0],  # rough fallback dim
+                    1, self.supervisor.config.visual_feature_dim,
                     device=self.device,
                 )
 
@@ -215,6 +215,13 @@ class VLAMambaACTPipeline:
 
         # Squeeze batch dim for single-env execution
         action = action.squeeze(0)
+
+        # Apply soft-intervention speed factor: interpolate toward current robot state.
+        # ACT outputs absolute joint positions, so scaling the delta (target - current)
+        # by speed_factor moves the robot only a fraction of the way to the target.
+        if decision is not None and decision.execution_speed_factor < 1.0:
+            current_pos = obs.robot_state.squeeze(0).to(action.device)
+            action = current_pos + decision.execution_speed_factor * (action - current_pos)
 
         return action, state, decision
 
